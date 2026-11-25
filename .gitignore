@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+.vercel
+# Flagsmith CLI credentials must never be committed
+flagsmith.env
+*.log
+claude.cmd
