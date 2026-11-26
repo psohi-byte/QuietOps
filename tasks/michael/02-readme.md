@@ -14,12 +14,17 @@ Read these files first and only describe what they actually say or do:
 - `CLAUDE.md`: the full plan: problem, hypothesis, variants, metrics, flags (sections 3 and 4)
 - `src/lib/flagsmith.js`: the exact flag names and event names used in code
 - `package.json`: the scripts and dependencies
+- `docs/designs/on-call-console-redesign.md`: why the dashboards look the way they do, and why the experiment
+  was restarted
+- `src/components/results/ResultsPage.jsx` and `api/results.js`: the live results page
 
 If something in the plan isn't built yet (check the code), either leave it out or mark it "(coming soon)".
 
 ## Sections to include (in this order)
 1. **QuietOps**: one-line tagline, e.g. "A 60-second outage game that A/B tests how alerts should be shown."
-   Under it, a placeholder line: `**Play it:** _link coming soon_` (the lead will add the live URL).
+   Under it, two links:
+   `**Play it:** https://quiet-ops-kohl.vercel.app` and
+   `**Live results:** https://quiet-ops-kohl.vercel.app/results`
 2. **The problem**: alert fatigue: during outages engineers get flooded with dozens of alerts, most are
    side effects, and finding the real root cause is slow. 3–4 sentences max.
 3. **How the game works**: the 4 steps: intro → alert dashboard (60s timer) → pick the root cause from 4 choices → result screen.
@@ -35,7 +40,17 @@ If something in the plan isn't built yet (check the code), either leave it out o
 
    Plus one sentence on why the kill switch and config are separate flags: the experiment flag is locked while an experiment runs.
    Also mention: anonymous player IDs (no login), so each player always sees the same version.
-6. **Results**: write `_Experiment running. Results will be posted here._` We'll fill this in with real numbers later.
+6. **Results**:
+   - Link the live results page: https://quiet-ops-kohl.vercel.app/results. It updates about once a minute from
+     Flagsmith: success rate per version, chance the grouped view is better, what players did, and all numbers.
+   - Then write `_Experiment running. Final numbers will be posted here._` The final numbers get filled in at the end.
+   - Add one short "Experiment history" note:
+     - The first experiment (#595) was stopped early, because the grouped view was redesigned to look like a real
+       on-call tool and to stop it from hinting at the answer.
+     - The current experiment is **#610**. Only #610's data counts.
+     - Players who played #595 don't count again.
+   - In one sentence, explain how the results page gets its data: a small Vercel function (`api/results.js`)
+     reads Flagsmith's results with a secret key that stays on the server. Never write the key itself.
 7. **Run it locally**: the commands from AGENTS.md (`npm install`, copy `.env.example` to `.env.local`, `npm run dev`).
    Say the app works without a key but won't be part of the experiment.
 8. **Tech stack**: React + Vite, Flagsmith JS SDK, Vercel.
