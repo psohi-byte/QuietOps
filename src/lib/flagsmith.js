@@ -95,9 +95,13 @@ export function getGameConfig() {
   return { ...DEFAULT_CONFIG, ...(raw && typeof raw === 'object' ? raw : {}) };
 }
 
-// Call ONLY when the dashboard is actually shown: getExperimentFlag records the exposure.
-// Returns "control" or "grouped".
-export function getDashboardVariant() {
+// Call ONLY when the dashboard is actually shown. Returns "control" or "grouped".
+//   recordExposure = true  -> getExperimentFlag: records the exposure (player's counted round)
+//   recordExposure = false -> getValue: same assigned variant, NO exposure (replays). Otherwise
+//                             returning players would log exposures that can never convert,
+//                             diluting both arms. (Verified in SDK source: only getExperimentFlag
+//                             calls trackExposureEvent.)
+export function getDashboardVariant({ recordExposure }) {
   // Local dev only (compiled out of production builds): ?variant=grouped forces a view.
   // It records no exposure.
   if (import.meta.env.DEV) {
@@ -105,8 +109,10 @@ export function getDashboardVariant() {
     if (forced === 'grouped' || forced === 'control') return forced;
   }
   if (!ready) return 'control';
-  const flag = flagsmith.getExperimentFlag(EXPERIMENT_FLAG);
-  return flag?.value === 'grouped' ? 'grouped' : 'control';
+  const value = recordExposure
+    ? flagsmith.getExperimentFlag(EXPERIMENT_FLAG)?.value
+    : flagsmith.getValue(EXPERIMENT_FLAG);
+  return value === 'grouped' ? 'grouped' : 'control';
 }
 
 // Only a player's FIRST round counts toward the experiment. Replaying the same incident is
