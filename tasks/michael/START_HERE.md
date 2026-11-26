@@ -39,8 +39,17 @@ check the result looks right, and make sure you understand what it built.
 
 ## Other non-coding jobs
 - Sign up for the hackathon on WeMakeDevs and watch the Flagsmith demo video
-- Play the game on phone and laptop; report anything broken or confusing. **Your first play counts as real
-  data, so play it properly once** before testing things.
+- Play the game on phone and laptop; report anything broken or confusing. **You know the answer, so your plays
+  must not count.** On every device, open this link once first:
+  **https://quiet-ops-kohl.vercel.app/?team=1**
+  That marks the browser as "team", so nothing you do there counts in the experiment.
+  (Do it in each browser you use. Private/incognito windows forget it, so use a normal window.)
+- **To see both versions side by side** (the list and the grouped view with the clickable map), run the game
+  on your laptop (`git pull`, `npm run dev`) and open:
+  - http://localhost:5173/?variant=control → list view
+  - http://localhost:5173/?variant=grouped → grouped view
+  These links only work on your own laptop (localhost), never on the live site, and never count.
+  **Never post them or describe the two versions publicly** (see `00-recruiting.md`).
 - Screenshot the results once a day: https://quiet-ops-kohl.vercel.app/results (and the Flagsmith experiment
   page if you have access). The current experiment is **#795**; ignore the old #595 and #610.
 - Star Flagsmith on GitHub: https://github.com/Flagsmith/flagsmith

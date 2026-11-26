@@ -124,10 +124,23 @@ export function getDashboardVariant({ recordExposure }) {
 const ROUNDS_KEY = 'quietops_rounds_started';
 let memoryRounds = 0;
 
+// Team devices: opening the site once with ?team=1 marks this browser as "already played",
+// so the team (who know the answer) can test the live site without adding a biased data point.
+// It only ever stops counting; it can't force a version or add an exposure.
+if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('team')) {
+  memoryRounds = 1;
+  try {
+    const n = Number(localStorage.getItem(ROUNDS_KEY) ?? 0);
+    if (n < 1) localStorage.setItem(ROUNDS_KEY, '1');
+  } catch {
+    // storage blocked: the in-memory mark still covers this page load
+  }
+}
+
 export function startRound() {
   let previous = memoryRounds;
   try {
-    previous = Number(localStorage.getItem(ROUNDS_KEY) ?? 0);
+    previous = Math.max(memoryRounds, Number(localStorage.getItem(ROUNDS_KEY) ?? 0));
     localStorage.setItem(ROUNDS_KEY, String(previous + 1));
   } catch {
     // localStorage blocked: fall back to counting in memory for this page load
