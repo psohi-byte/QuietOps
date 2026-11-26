@@ -7,8 +7,8 @@ Order follows CLAUDE.md §10: problem → play → the flag → kill switch / co
 - [ ] Practise the staged rollout on the **Development** simulated experiment (#805) first, so nothing on
       Production is a surprise: complete it, then set the grouped % on `dashboard_variant` to 10 → 50 → 100.
 - [ ] Local dev server running (`npm run dev`) for the dev-only `?variant=control` / `?variant=grouped`
-      views. **Use a fresh browser profile for the live site** so the recording isn't a counted round
-      (or play it on localhost, which talks to Development).
+      views. **Open https://quiet-ops-kohl.vercel.app/?team=1 once in the recording browser** so playing the
+      live site isn't a counted round (or play it on localhost, which talks to Development).
 - [ ] Tabs open: live game, live `/results`, Flagsmith → Production → `dashboard_variant`, `quietops_enabled`,
       experiment #795, and `src/App.jsx` + `src/lib/flagsmith.js` in the editor.
 - [ ] Screen at 1440×900, browser zoom 110%, notifications off.
