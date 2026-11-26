@@ -43,11 +43,15 @@ export default async function handler(req, res) {
     const experiment = await expRes.json();
     const results = (await resultsRes.json()).results;
 
-    // Ask Flagsmith to recompute if the numbers are stale. Fire-and-forget: the next
-    // request picks up the fresh numbers. Errors (e.g. rate limit) are ignored.
+    // Ask Flagsmith to recompute if the numbers are stale; the next request picks up the
+    // fresh numbers. We wait (max 1.5s) because Vercel may freeze the function right after
+    // it responds, which would kill a fire-and-forget request. Errors (rate limit) are ignored.
     const asOf = Date.parse(results?.as_of ?? 0);
     if (!results?.is_final && Date.now() - asOf > REFRESH_AFTER_MS) {
-      fetch(`${base}/results/refresh/`, { method: 'POST', headers }).catch(() => {});
+      await Promise.race([
+        fetch(`${base}/results/refresh/`, { method: 'POST', headers }).catch(() => {}),
+        new Promise((resolve) => setTimeout(resolve, 1500)),
+      ]);
     }
 
     // CDN-cache for a minute so many viewers don't hammer Flagsmith.
