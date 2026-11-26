@@ -12,7 +12,17 @@ export const METRICS = {
 
 const emptyVariant = () => ({ exposed: 0, found: 0, wrong: 0, timedOut: 0, secondsSum: 0 });
 
-export function shapeResults(experiment, results) {
+// Flagsmith's own "chance to win" for the grouped variant on one metric, as 0..1, or null
+// while Flagsmith hasn't computed it yet. Read defensively: the inference block is empty
+// until there's enough data, and may report percentages (0..100) or fractions.
+export function groupedChanceToWin(inference) {
+  const raw = inference?.chance_to_win?.grouped ?? inference?.statistics?.chance_to_win?.grouped;
+  const n = Number(raw);
+  if (raw == null || !Number.isFinite(n)) return null;
+  return n > 1 ? n / 100 : n;
+}
+
+export function shapeResults(experiment, results, rollout = null) {
   const variants = { control: emptyVariant(), grouped: emptyVariant() };
   const inference = {};
 
@@ -42,5 +52,7 @@ export function shapeResults(experiment, results) {
     srmPValue: results?.payload?.srm_p_value ?? null,
     variants,
     inference, // Flagsmith's own statistics, once it has enough data
+    flagsmithChance: groupedChanceToWin(inference.found), // primary metric (585)
+    rollout, // { enabled, groupedPercent } once the experiment has ended, else null
   };
 }

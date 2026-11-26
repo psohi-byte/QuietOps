@@ -99,3 +99,32 @@
   .bar-row { grid-template-columns: 84px minmax(0, 1fr); }
   .legend { margin-left: 0; }
 }
+
+/* Decision: verdict under the pre-registered rule, progress, split health, the rule itself */
+.decision { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 4px 24px; padding: 18px 20px; margin-bottom: 14px; }
+.decision.tone-grouped { border-color: color-mix(in srgb, var(--series-grouped) 55%, var(--border)); }
+.decision.tone-control { border-color: color-mix(in srgb, var(--series-control) 55%, var(--border)); }
+.decision-head { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; }
+.tone-grouped .decision-head { color: var(--series-grouped); }
+.tone-control .decision-head { color: var(--series-control); }
+.decision-body { color: var(--muted); margin: 6px 0 0; font-size: 0.92rem; }
+.decision-rates { color: var(--text); margin: 8px 0 0; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.82rem; font-weight: 600; }
+.progress-count { font-family: var(--mono); color: var(--text); font-variant-numeric: tabular-nums; }
+.progress-track { height: 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); margin-top: 8px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width 400ms ease; }
+.split-health { color: var(--faint); font-size: 0.8rem; margin: 8px 0 0; }
+.split-health.bad { color: var(--warning); }
+.decision-rule { grid-column: 1 / -1; margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; color: var(--muted); font-size: 0.88rem; }
+.decision-rule summary { cursor: pointer; color: var(--text); font-weight: 600; }
+.decision-rule ul { padding-left: 18px; margin: 8px 0 0; }
+.decision-rule li { margin: 6px 0; }
+@media (max-width: 720px) { .decision { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
+
+/* Rollout tracker (shown after the experiment ends) */
+.rollout { margin-bottom: 14px; }
+.rollout-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 14px 16px 4px; }
+.rollout-step { border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; color: var(--faint); }
+.rollout-step.done { border-color: var(--accent); color: var(--accent); background: rgba(61, 220, 151, 0.08); }
+.rollout-pct { font-family: var(--mono); font-weight: 700; }
+.rollout-now { padding: 8px 16px 14px; margin: 0; color: var(--muted); }

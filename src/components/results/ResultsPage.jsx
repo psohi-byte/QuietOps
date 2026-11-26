@@ -15,8 +15,18 @@ const OUTCOMES = [
   { key: 'wrong', label: 'Picked the wrong service' },
   { key: 'timedOut', label: 'Ran out of time' },
 ];
-const TARGET_PER_VERSION = 60; // rough sample size for a trustworthy call (see docs)
 const POLL_MS = 60_000;
+
+// The decision rule, written down on 2026-11-26 BEFORE any v3 results existed
+// (docs/designs/winning-plan.md). The page applies it live so anyone can check the call.
+const RULE = {
+  decideAt: 'Sat Nov 28, 2 PM PT',
+  minPerVersion: 30, // fewer than this per version at the deadline = inconclusive
+  win: 0.8, // chance grouped is better >= 80% -> grouped wins (if the guardrail holds)
+  lose: 0.2, // <= 20% -> the list wins
+  maxExtraWrong: 0.1, // guardrail: grouped's wrong-call rate may be at most 10 points higher
+};
+const TARGET_PER_VERSION = RULE.minPerVersion;
 
 async function loadResults() {
   const res = await fetch('/api/results', { headers: { Accept: 'application/json' } });
@@ -74,10 +84,13 @@ export default function ResultsPage() {
 function Results({ data }) {
   const { control: a, grouped: b } = data.variants;
   const total = a.exposed + b.exposed;
-  const winProb = useMemo(
+  const localProb = useMemo(
     () => probabilityBBeatsA(a.found, a.exposed, b.found, b.exposed),
     [a.found, a.exposed, b.found, b.exposed]
   );
+  // Flagsmith's own number when it has one; until then, our estimate from the same counts.
+  const fromFlagsmith = data.flagsmithChance != null;
+  const winProb = fromFlagsmith ? data.flagsmithChance : localProb;
   const avgSeconds = (v) => (v.found ? Math.round(v.secondsSum / v.found) : null);
   const early = Math.min(a.exposed, b.exposed) < TARGET_PER_VERSION;
   const running = data.experiment.status === 'running';
@@ -98,6 +111,9 @@ function Results({ data }) {
       <main className="results-main">
         <h1 className="results-title">Do grouped alerts help engineers find the root cause?</h1>
         <p className="results-hypothesis">{data.experiment.hypothesis}</p>
+
+        <Decision data={data} winProb={winProb} />
+        {data.rollout && <Rollout rollout={data.rollout} />}
 
         {total === 0 ? (
           <section className="panel empty">No players yet. Results appear here as people play.</section>
@@ -121,14 +137,15 @@ function Results({ data }) {
               <div className="tile tile-win">
                 <div className="tile-label">Chance grouped is better</div>
                 <div className="tile-value">{winProb == null ? '–' : pct(winProb)}</div>
-                <div className="tile-sub">Bayesian estimate from the counts above</div>
+                <div className="tile-sub">
+                  {fromFlagsmith ? "Flagsmith's chance to win (found root cause)" : 'Bayesian estimate from the counts above'}
+                </div>
               </div>
             </section>
 
             {early && (
               <p className="notice" role="note">
-                Early data: {a.exposed} vs {b.exposed} players. A confident call needs roughly{' '}
-                {TARGET_PER_VERSION} per version.
+                Early data: {a.exposed} vs {b.exposed} players. The rule needs at least {TARGET_PER_VERSION} per version.
               </p>
             )}
 
@@ -194,6 +211,144 @@ function Results({ data }) {
         </section>
       </main>
     </div>
+  );
+}
+
+// Where the data stands under the pre-registered rule, in plain English, plus the rule itself,
+// player progress and a check that Flagsmith really is splitting players 50/50.
+function verdict(data, winProb) {
+  const { control: a, grouped: b } = data.variants;
+  const minN = Math.min(a.exposed, b.exposed);
+  const finished = data.experiment.status !== 'running';
+  const extraWrong = (rate(b.wrong, b.exposed) ?? 0) - (rate(a.wrong, a.exposed) ?? 0);
+  const when = finished ? '' : ` Decision: ${RULE.decideAt}.`;
+
+  if (minN < RULE.minPerVersion) {
+    return {
+      tone: 'pending',
+      head: finished ? 'Inconclusive' : 'Not decided yet',
+      body: `Needs at least ${RULE.minPerVersion} players per version (now ${a.exposed} list, ${b.exposed} grouped).${when}`,
+    };
+  }
+  const p = pct(winProb);
+  if (winProb >= RULE.win && extraWrong <= RULE.maxExtraWrong) {
+    return {
+      tone: 'grouped',
+      head: finished ? 'Grouped wins' : 'Grouped is ahead',
+      body: `${p} chance grouped is better, and it doesn't cause more wrong calls.${finished ? '' : ' If this holds at the deadline, grouped gets rolled out.'}${when}`,
+    };
+  }
+  if (winProb >= RULE.win) {
+    return {
+      tone: 'pending',
+      head: finished ? 'Inconclusive' : 'Not a win yet',
+      body: `Grouped finds the cause more often (${p}), but its wrong calls are ${Math.round(extraWrong * 100)} points higher, over the ${Math.round(RULE.maxExtraWrong * 100)}-point limit.${when}`,
+    };
+  }
+  if (winProb <= RULE.lose) {
+    return {
+      tone: 'control',
+      head: finished ? 'The list wins' : 'The list is ahead',
+      body: `Only ${p} chance grouped is better.${finished ? '' : ' If this holds, the list stays.'}${when}`,
+    };
+  }
+  return {
+    tone: 'pending',
+    head: finished ? 'Inconclusive' : 'Too close to call',
+    body: `${p} chance grouped is better: between the ${Math.round(RULE.lose * 100)}% and ${Math.round(RULE.win * 100)}% lines.${when}`,
+  };
+}
+
+function Decision({ data, winProb }) {
+  const { control: a, grouped: b } = data.variants;
+  const total = a.exposed + b.exposed;
+  const goal = RULE.minPerVersion * 2;
+  const v = verdict(data, winProb);
+  const srm = data.srmPValue;
+
+  return (
+    <section className={`panel decision tone-${v.tone}`} aria-label="Decision">
+      <div className="decision-verdict">
+        <div className="decision-head">{v.head}</div>
+        <p className="decision-body">{v.body}</p>
+        {total > 0 && (
+          <p className="decision-rates">
+            Found the root cause: grouped {pct(rate(b.found, b.exposed))} · list {pct(rate(a.found, a.exposed))}
+          </p>
+        )}
+      </div>
+
+      <div className="decision-progress">
+        <div className="progress-label">
+          <span>Players so far</span>
+          <span className="progress-count">
+            {total} / {goal}
+          </span>
+        </div>
+        <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={goal} aria-valuenow={total}>
+          <div className="progress-fill" style={{ width: `${Math.min(100, (total / goal) * 100)}%` }} />
+        </div>
+        {srm != null && (
+          <p className={`split-health ${srm < 0.01 ? 'bad' : ''}`}>
+            {srm < 0.01
+              ? `Warning: players aren't splitting 50/50 as expected (p = ${srm.toFixed(3)}). Results may be biased.`
+              : '50/50 split looks healthy (sample ratio check passed).'}
+          </p>
+        )}
+      </div>
+
+      <details className="decision-rule">
+        <summary>The decision rule (written before any results came in)</summary>
+        <ul>
+          <li>
+            Decided on <strong>{RULE.decideAt}</strong>, on the primary metric: did the player find the root cause.
+          </li>
+          <li>
+            <strong>Grouped wins</strong> if there's at least an {Math.round(RULE.win * 100)}% chance it's better{' '}
+            <em>and</em> its wrong-call rate isn't more than {Math.round(RULE.maxExtraWrong * 100)} points higher.
+            Then it's rolled out 10% → 50% → 100% with the same flag.
+          </li>
+          <li>
+            <strong>The list wins</strong> if that chance is {Math.round(RULE.lose * 100)}% or less.
+          </li>
+          <li>
+            Anything in between, or fewer than {RULE.minPerVersion} players per version, is <strong>inconclusive</strong>:
+            the list stays, and we say so.
+          </li>
+          <li>
+            Why 80% and not 95%: this is a layout change behind a flag with a kill switch. Being wrong costs little and
+            is undone in seconds, so we accept more risk in exchange for a decision with a hackathon-sized sample.
+          </li>
+          <li>
+            "Chance grouped is better" is Flagsmith's own chance-to-win once it reports one; until then it's a
+            Bayesian estimate from the same counts.
+          </li>
+        </ul>
+      </details>
+    </section>
+  );
+}
+
+function Rollout({ rollout }) {
+  const steps = [10, 50, 100];
+  const now = rollout.enabled ? rollout.groupedPercent : 0;
+  return (
+    <section className="panel rollout" aria-label="Rollout">
+      <header className="panel-head">
+        <h2>Rollout</h2>
+        <span className="panel-meta">share of players now served the grouped view, via the same flag</span>
+      </header>
+      <div className="rollout-steps">
+        {steps.map((s) => (
+          <div key={s} className={`rollout-step ${now >= s ? 'done' : ''}`}>
+            <span className="rollout-pct">{s}%</span>
+          </div>
+        ))}
+      </div>
+      <p className="rollout-now">
+        Grouped view: <strong>{Math.round(now)}%</strong> of players
+      </p>
+    </section>
   );
 }
 
