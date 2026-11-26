@@ -8,3 +8,6 @@ dist
 flagsmith.env
 *.log
 claude.cmd
+
+# local-only fixture for the /results page
+public/dev-results.json
