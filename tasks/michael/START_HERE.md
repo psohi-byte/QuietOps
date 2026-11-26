@@ -1,6 +1,9 @@
 # Michael: start here
 
-Hi Michael! You have two coding tasks. Codex will do the typing; your job is to give it the task,
+Hi Michael! **Your #1 job right now is recruiting players: read `tasks/michael/00-recruiting.md` and post
+today.** It needs no coding. Without players the experiment has no result, and the experiment is what we're judged on.
+
+After that you have two coding tasks. Codex will do the typing; your job is to give it the task,
 check the result looks right, and make sure you understand what it built.
 
 ## One-time setup (about 10 minutes)
@@ -30,13 +33,14 @@ check the result looks right, and make sure you understand what it built.
 6. Tell the lead the PR is ready. **Don't merge it yourself.** The lead reviews and merges.
 
 ## Your tasks (in order)
-1. `tasks/michael/01-result-screen.md`: the screen players see after answering
+0. `tasks/michael/00-recruiting.md`: **recruit players (top priority, no coding, start now)**
+1. `tasks/michael/01-result-screen.md`: the screen players see after answering (now includes a player-count line)
 2. `tasks/michael/02-readme.md`: the project README judges will read
 
-## Non-coding jobs (from the plan)
+## Other non-coding jobs
 - Sign up for the hackathon on WeMakeDevs and watch the Flagsmith demo video
-- Play the game on phone and laptop once it's deployed; report anything broken or confusing
-- Share the game link to recruit players (Flagsmith / WeMakeDevs Discords, friends)
+- Play the game on phone and laptop; report anything broken or confusing. **Your first play counts as real
+  data, so play it properly once** before testing things.
 - Screenshot the results once a day: https://quiet-ops-kohl.vercel.app/results (and the Flagsmith experiment
   page if you have access). The current experiment is **#795**; ignore the old #595 and #610.
 - Star Flagsmith on GitHub: https://github.com/Flagsmith/flagsmith
