@@ -37,5 +37,6 @@ check the result looks right, and make sure you understand what it built.
 - Sign up for the hackathon on WeMakeDevs and watch the Flagsmith demo video
 - Play the game on phone and laptop once it's deployed; report anything broken or confusing
 - Share the game link to recruit players (Flagsmith / WeMakeDevs Discords, friends)
-- Screenshot the Flagsmith experiment results once a day
+- Screenshot the results once a day: https://quiet-ops-kohl.vercel.app/results (and the Flagsmith experiment
+  page if you have access). The current experiment is **#610**; ignore the old #595.
 - Star Flagsmith on GitHub: https://github.com/Flagsmith/flagsmith
