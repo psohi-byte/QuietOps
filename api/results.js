@@ -15,7 +15,7 @@
 import { shapeResults } from './_shape.js';
 
 const API = 'https://api.flagsmith.com/api/v1';
-const DEFAULT_EXPERIMENT_ID = '610'; // "Grouped alerts vs chronological list (v2)"
+const DEFAULT_EXPERIMENT_ID = '795'; // "Grouped alerts vs chronological list (v3)": map fix, started 2026-11-26 21:46 UTC
 const REFRESH_AFTER_MS = 5 * 60 * 1000; // Flagsmith allows one refresh per 5 minutes
 
 export default async function handler(req, res) {
