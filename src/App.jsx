@@ -41,6 +41,7 @@ function PlaceholderResult({ correct, seconds, rootCause, timedOut, onPlayAgain 
 // Dev preview so the result screen can be tested on its own, e.g.
 //   http://localhost:5173/?preview=result&correct=1&seconds=23
 //   http://localhost:5173/?preview=result&timedout=1
+//   http://localhost:5173/?preview=result&correct=1&seconds=23&players=47
 function ResultPreview() {
   const q = new URLSearchParams(window.location.search);
   return (
@@ -49,9 +50,25 @@ function ResultPreview() {
       timedOut={q.get('timedout') === '1'}
       seconds={Number(q.get('seconds') ?? 60)}
       rootCause={q.get('rootCause') ?? 'db-primary'}
+      players={q.has('players') ? Number(q.get('players')) : undefined}
       onPlayAgain={() => console.log('[preview] play again clicked')}
     />
   );
+}
+
+// Total players in the running experiment (both versions added together), for the result
+// screen's "You're one of N" line. Only the total leaves this function: the per-version
+// numbers must never reach a player. Returns undefined when unknown or still tiny.
+async function fetchPlayerCount() {
+  try {
+    const res = await fetch('/api/results');
+    if (!res.ok) return undefined;
+    const v = (await res.json())?.variants ?? {};
+    const total = (v.control?.exposed ?? 0) + (v.grouped?.exposed ?? 0);
+    return total >= 5 ? total : undefined;
+  } catch {
+    return undefined; // local dev (no API) or offline
+  }
 }
 
 const DEBUG = new URLSearchParams(window.location.search).has('debug');
@@ -72,6 +89,7 @@ function Game() {
   const [startedAt, setStartedAt] = useState(0);
   const [answerOpen, setAnswerOpen] = useState(false);
   const [result, setResult] = useState(null);
+  const [players, setPlayers] = useState(undefined);
   const round = useRef(null); // { round, counted }
   const finished = useRef(false);
   const diagnoseRef = useRef(null);
@@ -112,6 +130,7 @@ function Game() {
 
     setResult({ correct, seconds, timedOut });
     setScreen('result');
+    fetchPlayerCount().then(setPlayers); // the line appears when it arrives; no waiting
     window.scrollTo(0, 0);
   }
 
@@ -145,6 +164,7 @@ function Game() {
         seconds={result.seconds}
         timedOut={result.timedOut}
         rootCause={incident.rootCause}
+        players={players}
         onPlayAgain={() => setScreen('intro')}
       />
     );

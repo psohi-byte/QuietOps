@@ -20,10 +20,13 @@ change App.jsx (and must not).
 | `rootCause` | string | the real root cause, e.g. `"db-primary"` |
 | `timedOut` | boolean (optional, default `false`) | `true` if the timer ran out before they answered |
 | `onPlayAgain` | function | call this when the player clicks "Play again" |
+| `players` | number (optional) | how many people have played so far. `undefined` when unknown |
 
 ```jsx
-export default function ResultScreen({ correct, seconds, rootCause, timedOut = false, onPlayAgain }) { ... }
+export default function ResultScreen({ correct, seconds, rootCause, timedOut = false, onPlayAgain, players }) { ... }
 ```
+
+The lead's `App.jsx` already passes `players` (it reads the count from the results API). You only display it.
 
 ## What to show
 1. **A big headline** depending on the outcome:
@@ -33,13 +36,20 @@ export default function ResultScreen({ correct, seconds, rootCause, timedOut = f
 2. **The time**: e.g. "in 23s". Don't show a time when `timedOut` is true.
 3. **The real root cause**, always shown: e.g. "The real root cause was **db-primary**." Show `rootCause` in a `<code>` tag.
 4. **One short line of context**: something like "In real outages, most alerts are symptoms. The trick is finding the one that caused the rest." Keep it to one sentence.
-5. **Two buttons:**
+5. **Player-count line** (this is what gets people to share; show it just above the buttons):
+   - When `players` is a number: `You're one of {players} on-call engineers who took this shift.`
+     and under it, smaller: `Can your friends beat 60 seconds?`
+   - When `players` is `undefined`: show only `Can your friends beat 60 seconds?`
+   - **Never** mention versions, variants, groups, "A/B", other players' scores or success rates. Players must not
+     find out there are two versions; it would spoil the experiment.
+6. **Two buttons:**
    - **Share**: see below
    - **Play again**: calls `onPlayAgain()`
 
 ## Share button
-- Share text (correct): `I found the root cause of a production outage in {seconds}s on QuietOps. Can you beat it?`
-- Share text (wrong / timed out): `Production went down and I couldn't find the root cause in time. Can you? QuietOps`
+- Share text (correct): `I found the root cause of a production outage in {seconds}s on QuietOps. Can you beat it? (no spoilers!)`
+- Share text (wrong / timed out): `Production went down and I couldn't find the root cause in time. Can you? QuietOps (no spoilers!)`
+- **The share text must never include the root cause.**
 - Add the game link to the end: `window.location.origin`
 - If `navigator.share` exists (phones), use it: `navigator.share({ title: 'QuietOps', text, url })`.
   If the user cancels the share sheet, do nothing (catch the error silently).
@@ -66,6 +76,8 @@ browser's phone view (DevTools → device toolbar → iPhone):
 - http://localhost:5173/?preview=result&correct=1&seconds=23
 - http://localhost:5173/?preview=result&correct=0&seconds=41
 - http://localhost:5173/?preview=result&timedout=1
+- http://localhost:5173/?preview=result&correct=1&seconds=23&players=47 → shows "You're one of 47 on-call engineers…"
+- The first three links have no `players`, so they must show only "Can your friends beat 60 seconds?"
 - Click **Share** on desktop → button says "Copied!" and the text pastes correctly.
 - Click **Play again** → the browser console (F12) shows `[preview] play again clicked`.
 - `npm run build` succeeds.
