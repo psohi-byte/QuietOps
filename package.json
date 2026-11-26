@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "simulate": "node scripts/simulate.js"
+    "simulate": "node --env-file=.env.local scripts/simulate.js"
   },
   "dependencies": {
     "@flagsmith/flagsmith": "^12.6.0",
