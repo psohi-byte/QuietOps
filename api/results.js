@@ -5,8 +5,9 @@
 //
 // Why a server function: the Admin API needs an organisation API key, which must never
 // reach the browser. The key lives only in Vercel's environment (FLAGSMITH_ADMIN_API_KEY).
-// This function only ever calls two fixed endpoints for one experiment, so it can't be
-// used to read or change anything else.
+// This function only calls fixed endpoints for one experiment (details, results, results
+// refresh) plus, once the experiment has ended, that experiment flag's feature state (to show
+// the rollout %). Nothing in the request can change which endpoints are called.
 //
 // Env vars (Vercel → Project → Settings → Environment Variables):
 //   FLAGSMITH_ADMIN_API_KEY   secret: Flagsmith → Organisation Settings → API Keys
@@ -54,9 +55,24 @@ export default async function handler(req, res) {
       ]);
     }
 
+    // After the experiment ends, the flag's own feature state decides who sees grouped.
+    // Its grouped % is the rollout (10 -> 50 -> 100) shown on /results.
+    let rollout = null;
+    if (experiment.status !== 'running' && experiment.feature?.id) {
+      const fsRes = await fetch(
+        `${API}/environments/${encodeURIComponent(env)}/featurestates/?feature=${encodeURIComponent(experiment.feature.id)}`,
+        { headers }
+      ).catch(() => null);
+      const state = fsRes?.ok ? (await fsRes.json()).results?.find((s) => !s.identity && !s.feature_segment) : null;
+      if (state) {
+        const grouped = state.multivariate_feature_state_values?.[0]?.percentage_allocation ?? 0;
+        rollout = { enabled: state.enabled, groupedPercent: Number(grouped) };
+      }
+    }
+
     // CDN-cache for a minute so many viewers don't hammer Flagsmith.
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
-    res.status(200).json(shapeResults(experiment, results));
+    res.status(200).json(shapeResults(experiment, results, rollout));
   } catch {
     res.status(502).json({ error: 'upstream' });
   }
