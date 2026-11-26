@@ -3,6 +3,8 @@
 // Flags used:
 //   dashboard_variant  : multivariate EXPERIMENT flag. Value "control" = list view (A), "grouped" = grouped view (B).
 //                        It is locked while the experiment runs, so the kill switch and config are separate flags.
+//                        Current experiment: #795 (v3, Production, started 2026-11-26 21:46 UTC).
+//                        #595 and #610 were ended because variant B changed; their data isn't used.
 //   quietops_enabled : kill switch. If it's off, the game shows a maintenance screen.
 //   game_config        : remote config (JSON string), e.g. {"timerSeconds":60,"introText":"..."}
 //

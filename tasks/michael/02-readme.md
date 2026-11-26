@@ -47,8 +47,10 @@ If something in the plan isn't built yet (check the code), either leave it out o
    - Add one short "Experiment history" note:
      - The first experiment (#595) was stopped early, because the grouped view was redesigned to look like a real
        on-call tool and to stop it from hinting at the answer.
-     - The current experiment is **#610**. Only #610's data counts.
-     - Players who played #595 don't count again.
+     - The second experiment (#610) was stopped after 1 player, because the grouped view's map was fixed
+       (lines crossed through service names) and made clickable.
+     - The current experiment is **#795**. Only #795's data counts.
+     - Players who played an earlier version don't count again.
    - In one sentence, explain how the results page gets its data: a small Vercel function (`api/results.js`)
      reads Flagsmith's results with a secret key that stays on the server. Never write the key itself.
 7. **Run it locally**: the commands from AGENTS.md (`npm install`, copy `.env.example` to `.env.local`, `npm run dev`).
