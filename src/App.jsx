@@ -17,6 +17,7 @@ import Timer from './components/game/Timer.jsx';
 import AnswerScreen from './components/game/AnswerScreen.jsx';
 import ListView from './components/dashboard/ListView.jsx';
 import GroupedView from './components/dashboard/GroupedView.jsx';
+import ResultsPage from './components/results/ResultsPage.jsx';
 
 // ResultScreen.jsx is Michael's file. It's loaded optionally, so the app still builds
 // before his file exists, and picks it up automatically once it does.
@@ -57,6 +58,7 @@ const DEBUG = new URLSearchParams(window.location.search).has('debug');
 const TITLE = incident.scenario.replace(/^SEV-1:\s*/, '');
 
 export default function App() {
+  if (window.location.pathname.replace(/\/$/, '') === '/results') return <ResultsPage />;
   if (new URLSearchParams(window.location.search).get('preview') === 'result') {
     return <ResultPreview />;
   }
