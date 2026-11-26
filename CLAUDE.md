@@ -1,4 +1,4 @@
-# SignalZero — Project Brief (Starting Point)
+# QuietOps — Project Brief (Starting Point)
 
 > **This is a starting plan, not a fixed spec.** Feel free to change the stack, structure, scope or details if you find a better approach. Just explain the change and why before making it. The goals (winning Track 01, keeping the experiment clean, shipping on time) matter more than following this doc exactly.
 
@@ -24,7 +24,7 @@
 
 **Track 01 extras:** a well-executed experiment (over many features), a clear hypothesis, versions behind a flag, a metric from real events, and explainable results.
 
-## 3. The Idea: SignalZero
+## 3. The Idea: QuietOps
 **Problem:** During production outages, engineers get flooded with dozens of alerts at once (alert fatigue). Most are side effects, and finding the real root cause is slow and costly.
 
 **Product:** A 60-second interactive incident-response game.
@@ -63,7 +63,7 @@ https://docs.flagsmith.com/experimentation/set-up-with-a-coding-agent
 - **Event names must match exactly** (case-sensitive) between code and metric.
 - **Flush buffered events** before the page/process exits.
 - **The experiment flag is locked while the experiment runs.** So the kill switch and remote config must be **separate flags**:
-  - `signalzero_enabled`: kill switch (shows a "maintenance" screen if off)
+  - `quietops_enabled`: kill switch (shows a "maintenance" screen if off)
   - `game_config`: remote config (e.g. timer length, intro text)
 - Start the experiment only after the code changes are in place and verified.
 - End of event: **roll out the winner** through the flag (ideally staged 10% → 50% → 100%) and show it in the demo.
@@ -103,7 +103,7 @@ README.md                           # OWNER: MICHAEL. Do not edit.
 ```
 Generate one realistic outage scenario with ~25 alerts. The root cause should be findable but buried among symptom alerts in the list view.
 
-**ResultScreen props (contract with Michael):** `correct` (bool), `seconds` (number), `rootCause` (string). Also accept an `onPlayAgain` callback.
+**ResultScreen props (contract with Michael):** `correct` (bool), `seconds` (number), `rootCause` (string), optional `timedOut` (bool), and an `onPlayAgain` callback. Full spec: `tasks/michael/01-result-screen.md`.
 
 **Game flow:**
 ```
@@ -136,8 +136,8 @@ Rules:
 - **Do not push using any other GitHub account.**
 - Do not use `https://github.com/...`
 - Do not use `git@github.com:...`
-- Use only: `git@github-psohi-byte:psohi-byte/SignalZero.git`
-- The repo is new. Create it under the `psohi-byte` account first (e.g. `gh repo create psohi-byte/SignalZero --private`, or via github.com while signed in as psohi-byte), then add Michael as a collaborator.
+- Use only: `git@github-psohi-byte:psohi-byte/QuietOps.git`
+- The repo is new. Create it under the `psohi-byte` account first (e.g. `gh repo create psohi-byte/QuietOps --private`, or via github.com while signed in as psohi-byte), then add Michael as a collaborator.
 
 Before committing or pushing, verify:
 ```
@@ -150,7 +150,7 @@ git branch --show-current
 Expected:
 - `user.name` = `psohi-byte`
 - `user.email` = `prabhjeevsohi@gmail.com`
-- `origin` = `git@github-psohi-byte:psohi-byte/SignalZero.git`
+- `origin` = `git@github-psohi-byte:psohi-byte/QuietOps.git`
 - `branch` = `main` or a `feature/*` branch
 
 **If the Git identity or remote is wrong, stop and tell the user before committing or pushing.**
