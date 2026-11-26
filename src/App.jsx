@@ -54,6 +54,7 @@ function ResultPreview() {
 }
 
 const DEBUG = new URLSearchParams(window.location.search).has('debug');
+const TITLE = incident.scenario.replace(/^SEV-1:\s*/, '');
 
 export default function App() {
   if (new URLSearchParams(window.location.search).get('preview') === 'result') {
@@ -71,6 +72,7 @@ function Game() {
   const [result, setResult] = useState(null);
   const round = useRef(null); // { round, counted }
   const finished = useRef(false);
+  const diagnoseRef = useRef(null);
 
   useEffect(() => {
     initFlagsmith().then(() => {
@@ -80,10 +82,11 @@ function Game() {
   }, []);
 
   function start() {
-    // Read the experiment flag only now, as the dashboard appears, so an exposure
-    // means the player really saw that variant.
-    setVariant(getDashboardVariant());
+    // Count the round FIRST, then read the experiment flag as the dashboard appears.
+    // Only a counted (first) round records an exposure; replays read the same variant
+    // without one, so returning players can't dilute the experiment.
     round.current = startRound();
+    setVariant(getDashboardVariant({ recordExposure: round.current.counted }));
     finished.current = false;
     setAnswerOpen(false);
     setStartedAt(Date.now());
@@ -122,7 +125,15 @@ function Game() {
   }
 
   if (screen === 'intro') {
-    return <Intro introText={config.introText} timerSeconds={config.timerSeconds} onStart={start} />;
+    return (
+      <Intro
+        title={TITLE}
+        alertCount={incident.alerts.length}
+        introText={config.introText}
+        timerSeconds={config.timerSeconds}
+        onStart={start}
+      />
+    );
   }
 
   if (screen === 'result') {
@@ -137,28 +148,48 @@ function Game() {
     );
   }
 
+  function closeAnswer() {
+    setAnswerOpen(false);
+    diagnoseRef.current?.focus(); // return focus to where the player was
+  }
+
   // screen === 'playing'
+  // Everything here is identical for both variants EXCEPT the one ListView/GroupedView line.
   return (
-    <div className="dashboard">
-      <header className="topbar">
-        <div>
-          <div className="sev">SEV-1</div>
-          <h1 className="incident-title">{incident.scenario.replace(/^SEV-1:\s*/, '')}</h1>
-          <p className="muted small">{incident.summary}</p>
+    <div className="console">
+      <header className="incident-bar">
+        <div className="incident-id">
+          <span className="brand">
+            <span className="logo-dot" aria-hidden="true" /> QuietOps
+          </span>
+          <div className="incident-line">
+            <span className="sev-badge">SEV-1</span>
+            <h1 className="incident-title">{TITLE}</h1>
+            <span className="status-pill">
+              <span className="pulse-dot" aria-hidden="true" /> Investigating
+            </span>
+          </div>
+          <p className="incident-summary">{incident.summary}</p>
         </div>
-        <div className="topbar-actions">
+        <div className="incident-actions">
           <Timer startedAt={startedAt} totalSeconds={config.timerSeconds} onExpire={() => finish(null)} />
-          <button className="primary" onClick={() => setAnswerOpen(true)}>Diagnose</button>
+          <button ref={diagnoseRef} className="primary" onClick={() => setAnswerOpen(true)}>
+            Diagnose
+          </button>
         </div>
       </header>
 
-      {DEBUG && <p className="debug">variant: <code>{variant}</code> · round {round.current?.round} · counted: {String(round.current?.counted)}</p>}
+      <div className="console-body">
+        {DEBUG && (
+          <p className="debug">
+            variant: <code>{variant}</code> · round {round.current?.round} · counted: {String(round.current?.counted)}
+          </p>
+        )}
 
-      {variant === 'grouped' ? <GroupedView incident={incident} /> : <ListView incident={incident} />}
+        {variant === 'grouped' ? <GroupedView incident={incident} /> : <ListView incident={incident} />}
+      </div>
 
-      {answerOpen && (
-        <AnswerScreen choices={incident.choices} onAnswer={finish} onClose={() => setAnswerOpen(false)} />
-      )}
+      {answerOpen && <AnswerScreen choices={incident.choices} onAnswer={finish} onClose={closeAnswer} />}
     </div>
   );
 }

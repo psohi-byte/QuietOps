@@ -17,9 +17,12 @@ export default function Timer({ startedAt, totalSeconds, onExpire }) {
   }, [remaining <= 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const urgent = remaining <= 10;
+  const secs = Math.ceil(remaining);
+  const label = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   return (
-    <div className={`timer ${urgent ? 'urgent' : ''}`} role="timer" aria-live="off">
-      {Math.ceil(remaining)}s
+    <div className={`timer ${urgent ? 'urgent' : ''}`} role="timer" aria-live="off" aria-label={`${secs} seconds left`}>
+      <span className="timer-label">time left</span>
+      <span className="timer-value">{label}</span>
     </div>
   );
 }
