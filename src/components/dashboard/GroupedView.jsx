@@ -7,11 +7,13 @@
 //  - Collapsed rows show no times. Times only appear on individual alerts once expanded,
 //    exactly as the list view shows them.
 //  - Nothing names, ranks or time-anchors a likely cause.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AlertRow from './AlertRow.jsx';
 import DependencyMap from './DependencyMap.jsx';
 import SeverityIcon, { SEVERITY_RANK } from '../ui/SeverityIcon.jsx';
 import { staggerStep } from './stagger.js';
+
+const rowId = (service) => `svc-row-${service}`;
 
 function worstSeverity(alerts) {
   return alerts.reduce((w, a) => (SEVERITY_RANK[a.severity] > SEVERITY_RANK[w] ? a.severity : w), 'info');
@@ -42,7 +44,7 @@ function buildGroups(incident) {
 
 function ServiceRow({ row, open, onToggle, index }) {
   return (
-    <li className={`svc-row stagger-item ${open ? 'open' : ''}`} style={{ '--i': index }}>
+    <li id={rowId(row.service)} className={`svc-row stagger-item ${open ? 'open' : ''}`} style={{ '--i': index }}>
       <button className="svc-head" onClick={onToggle} aria-expanded={open}>
         <span className="chevron" aria-hidden="true">▸</span>
         <SeverityIcon severity={row.worst} />
@@ -76,6 +78,24 @@ export default function GroupedView({ incident }) {
     setSelected(service);
   }
 
+  // Map node clicked: select it, open its row and bring the row into view (on phones the list
+  // sits below the map). Clicking the selected node again clears the selection.
+  const [scrollTo, setScrollTo] = useState(null);
+  function selectFromMap(service) {
+    if (selected === service) {
+      setSelected(null);
+      return;
+    }
+    setSelected(service);
+    setExpanded((prev) => new Set(prev).add(service));
+    setScrollTo(service);
+  }
+  useEffect(() => {
+    if (!scrollTo) return;
+    document.getElementById(rowId(scrollTo))?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    setScrollTo(null);
+  }, [scrollTo]);
+
   const counts = Object.fromEntries(main.services.map((r) => [r.service, r.alerts.length]));
   const worst = Object.fromEntries(main.services.map((r) => [r.service, r.worst]));
   const otherCount = others.reduce((n, g) => n + g.alerts.length, 0);
@@ -85,9 +105,15 @@ export default function GroupedView({ incident }) {
       <section className="panel">
         <header className="panel-head">
           <h2>Blast radius</h2>
-          <span className="panel-meta">services in this incident are outlined · arrows show calls</span>
+          <span className="panel-meta">services in this incident are outlined · arrows show calls · tap one to inspect</span>
         </header>
-        <DependencyMap services={incident.services} counts={counts} worst={worst} selected={selected} />
+        <DependencyMap
+          services={incident.services}
+          counts={counts}
+          worst={worst}
+          selected={selected}
+          onSelect={selectFromMap}
+        />
       </section>
 
       <div className="grouped-side">

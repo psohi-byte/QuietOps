@@ -295,10 +295,16 @@ kbd {
   .grouped > .panel:first-child { position: sticky; top: 96px; }
 }
 .depmap { display: block; width: 100%; height: auto; padding: 10px 8px 6px; }
-.depmap-edge { stroke: #2b3344; stroke-width: 1.4; }
+.depmap-edge { fill: none; stroke: #2b3344; stroke-width: 1.4; transition: stroke 150ms, opacity 150ms; }
 .depmap-edge.hot { stroke: rgba(255, 176, 32, 0.75); stroke-width: 1.8; }
+.depmap-edge.focus { stroke: var(--accent); stroke-width: 2.2; }
+.depmap-edge.dim { opacity: 0.35; }
 .depmap-arrowhead { fill: #2b3344; }
 .depmap-arrowhead.hot { fill: rgba(255, 176, 32, 0.85); }
+.depmap-arrowhead.focus { fill: var(--accent); }
+.depmap-node[role='button'] { cursor: pointer; outline: none; }
+.depmap-node[role='button']:hover rect { fill: rgba(255, 176, 32, 0.14); }
+.depmap-node[role='button']:focus-visible rect { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 4 3; }
 .depmap-node rect { fill: var(--surface-2); stroke: #2b3344; stroke-width: 1.2; transition: stroke 150ms, fill 150ms; }
 .depmap-node text { fill: var(--faint); font-family: var(--mono); font-size: var(--node-font, 11.5px); }
 .depmap-node.involved rect { fill: rgba(255, 176, 32, 0.07); stroke: var(--involved); stroke-width: 1.5; }
