@@ -3,7 +3,7 @@
 // Flags used:
 //   dashboard_variant  : multivariate EXPERIMENT flag. Value "control" = list view (A), "grouped" = grouped view (B).
 //                        It is locked while the experiment runs, so the kill switch and config are separate flags.
-//   signalzero_enabled : kill switch. If it's off, the game shows a maintenance screen.
+//   quietops_enabled : kill switch. If it's off, the game shows a maintenance screen.
 //   game_config        : remote config (JSON string), e.g. {"timerSeconds":60,"introText":"..."}
 //
 // Events (names are case-sensitive and must match the Flagsmith metrics exactly):
@@ -13,7 +13,7 @@
 import flagsmith from '@flagsmith/flagsmith';
 
 export const EXPERIMENT_FLAG = 'dashboard_variant';
-export const KILL_SWITCH_FLAG = 'signalzero_enabled';
+export const KILL_SWITCH_FLAG = 'quietops_enabled';
 export const CONFIG_FLAG = 'game_config';
 
 export const EVENTS = {
@@ -28,7 +28,7 @@ export const DEFAULT_CONFIG = {
 };
 
 const ENV_KEY = import.meta.env.VITE_FLAGSMITH_ENV_KEY;
-const PLAYER_ID_KEY = 'signalzero_player_id';
+const PLAYER_ID_KEY = 'quietops_player_id';
 
 let ready = false;
 let memoryPlayerId = null; // used when localStorage is blocked (private mode, etc.)
@@ -61,7 +61,7 @@ export function getPlayerId() {
 // experiment flag before identifying.
 export async function initFlagsmith() {
   if (!ENV_KEY) {
-    console.warn('[SignalZero] VITE_FLAGSMITH_ENV_KEY not set; using defaults (no experiment).');
+    console.warn('[QuietOps] VITE_FLAGSMITH_ENV_KEY not set; using defaults (no experiment).');
     return false;
   }
   try {
@@ -79,7 +79,7 @@ export async function initFlagsmith() {
     });
     return true;
   } catch (err) {
-    console.error('[SignalZero] Flagsmith init failed; using defaults.', err);
+    console.error('[QuietOps] Flagsmith init failed; using defaults.', err);
     return false;
   }
 }
