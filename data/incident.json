@@ -1,0 +1,52 @@
+{
+  "scenario": "SEV-1: Checkout is down",
+  "summary": "Customers can't complete checkout. Alerts are firing across the stack.",
+  "rootCause": "db-primary",
+  "explanation": "db-primary's disk filled up (96%), so its WAL writes stalled. Every service that writes to the database backed up behind it: connection pools exhausted, payments timed out, and the API started returning 5xx. The CDN and auth/redis alerts were unrelated background noise.",
+  "services": [
+    { "id": "web-frontend", "label": "web-frontend", "dependsOn": ["api-gateway", "cdn"] },
+    { "id": "api-gateway", "label": "api-gateway", "dependsOn": ["auth-svc", "orders-svc", "inventory-svc"] },
+    { "id": "auth-svc", "label": "auth-svc", "dependsOn": ["redis-sessions"] },
+    { "id": "redis-sessions", "label": "redis-sessions", "dependsOn": [] },
+    { "id": "orders-svc", "label": "orders-svc", "dependsOn": ["payments-svc", "db-primary"] },
+    { "id": "payments-svc", "label": "payments-svc", "dependsOn": ["db-primary"] },
+    { "id": "inventory-svc", "label": "inventory-svc", "dependsOn": ["db-primary"] },
+    { "id": "db-replica", "label": "db-replica", "dependsOn": ["db-primary"] },
+    { "id": "db-primary", "label": "db-primary", "dependsOn": [] },
+    { "id": "cdn", "label": "cdn", "dependsOn": [] }
+  ],
+  "groups": [
+    { "id": "g1", "label": "Cluster 1" },
+    { "id": "g2", "label": "Cluster 2" },
+    { "id": "g3", "label": "Cluster 3" }
+  ],
+  "alerts": [
+    { "id": 1,  "time": "02:09:12", "service": "cdn",            "severity": "warning",  "message": "Cache hit ratio dropped to 71% (eu-west-2)", "group": "g2" },
+    { "id": 2,  "time": "02:10:45", "service": "redis-sessions", "severity": "warning",  "message": "Memory usage 82% of maxmemory (4 GB)", "group": "g3" },
+    { "id": 3,  "time": "02:11:30", "service": "auth-svc",       "severity": "info",     "message": "Token refresh latency p95 310ms (above baseline)", "group": "g3" },
+    { "id": 4,  "time": "02:12:41", "service": "db-primary",     "severity": "warning",  "message": "Disk usage 96% on /var/lib/postgresql", "group": "g1" },
+    { "id": 5,  "time": "02:13:05", "service": "db-primary",     "severity": "warning",  "message": "WAL fsync latency p99 2.8s", "group": "g1" },
+    { "id": 6,  "time": "02:13:22", "service": "db-replica",     "severity": "warning",  "message": "Replication lag 45s", "group": "g1" },
+    { "id": 7,  "time": "02:13:40", "service": "inventory-svc",  "severity": "warning",  "message": "Query latency p99 4.1s (SLO 500ms)", "group": "g1" },
+    { "id": 8,  "time": "02:13:52", "service": "orders-svc",     "severity": "warning",  "message": "DB connection pool 90% utilised", "group": "g1" },
+    { "id": 9,  "time": "02:14:03", "service": "api-gateway",    "severity": "critical", "message": "5xx rate > 40% on /checkout", "group": "g1" },
+    { "id": 10, "time": "02:14:10", "service": "payments-svc",   "severity": "critical", "message": "Payment authorization failures 35%", "group": "g1" },
+    { "id": 11, "time": "02:14:15", "service": "db-primary",     "severity": "warning",  "message": "Active connections 480/500", "group": "g1" },
+    { "id": 12, "time": "02:14:18", "service": "orders-svc",     "severity": "critical", "message": "DB connection pool exhausted (50/50)", "group": "g1" },
+    { "id": 13, "time": "02:14:25", "service": "web-frontend",   "severity": "critical", "message": "Checkout page error rate 52%", "group": "g1" },
+    { "id": 14, "time": "02:14:31", "service": "cdn",            "severity": "warning",  "message": "Origin 504s from api-gateway: 18% of requests", "group": "g1" },
+    { "id": 15, "time": "02:14:40", "service": "payments-svc",   "severity": "critical", "message": "Ledger write timeouts (statement timeout 5s)", "group": "g1" },
+    { "id": 16, "time": "02:14:52", "service": "api-gateway",    "severity": "critical", "message": "p99 latency 12.4s (SLO 800ms)", "group": "g1" },
+    { "id": 17, "time": "02:15:05", "service": "inventory-svc",  "severity": "critical", "message": "Health check failing on 4/6 pods", "group": "g1" },
+    { "id": 18, "time": "02:15:11", "service": "auth-svc",       "severity": "warning",  "message": "Login success rate 94% (baseline 99%)", "group": "g3" },
+    { "id": 19, "time": "02:15:20", "service": "payments-svc",   "severity": "critical", "message": "Provider callback queue backlog: 12,000 messages", "group": "g1" },
+    { "id": 20, "time": "02:15:34", "service": "orders-svc",     "severity": "critical", "message": "Pod restarts: 7 in 5m (CrashLoopBackOff)", "group": "g1" },
+    { "id": 21, "time": "02:15:42", "service": "web-frontend",   "severity": "warning",  "message": "Apdex 0.41 (target 0.85)", "group": "g1" },
+    { "id": 22, "time": "02:15:50", "service": "api-gateway",    "severity": "critical", "message": "Upstream orders-svc marked unhealthy", "group": "g1" },
+    { "id": 23, "time": "02:16:10", "service": "cdn",            "severity": "warning",  "message": "Cache hit ratio 64% (eu-west-2)", "group": "g2" },
+    { "id": 24, "time": "02:16:18", "service": "payments-svc",   "severity": "critical", "message": "Error budget burn rate 14x", "group": "g1" },
+    { "id": 25, "time": "02:16:30", "service": "api-gateway",    "severity": "critical", "message": "Synthetic check 'checkout-flow' FAILED in 3 regions", "group": "g1" },
+    { "id": 26, "time": "02:16:41", "service": "cdn",            "severity": "info",     "message": "Purge request completed (assets/v2)", "group": "g2" }
+  ],
+  "choices": ["api-gateway", "payments-svc", "db-primary", "cdn"]
+}

@@ -98,14 +98,40 @@ export function getGameConfig() {
 // Call ONLY when the dashboard is actually shown: getExperimentFlag records the exposure.
 // Returns "control" or "grouped".
 export function getDashboardVariant() {
+  // Local dev only (compiled out of production builds): ?variant=grouped forces a view.
+  // It records no exposure.
+  if (import.meta.env.DEV) {
+    const forced = new URLSearchParams(window.location.search).get('variant');
+    if (forced === 'grouped' || forced === 'control') return forced;
+  }
   if (!ready) return 'control';
   const flag = flagsmith.getExperimentFlag(EXPERIMENT_FLAG);
   return flag?.value === 'grouped' ? 'grouped' : 'control';
 }
 
-export function track(event, metadata) {
+// Only a player's FIRST round counts toward the experiment. Replaying the same incident is
+// easier because you already know the answer, which would inflate both variants and blur the
+// difference. Marked at round start (the same moment as the exposure), so a player who
+// abandons round 1 still counts as "not resolved".
+const ROUNDS_KEY = 'quietops_rounds_started';
+let memoryRounds = 0;
+
+export function startRound() {
+  let previous = memoryRounds;
+  try {
+    previous = Number(localStorage.getItem(ROUNDS_KEY) ?? 0);
+    localStorage.setItem(ROUNDS_KEY, String(previous + 1));
+  } catch {
+    // localStorage blocked: fall back to counting in memory for this page load
+  }
+  memoryRounds = previous + 1;
+  return { round: previous + 1, counted: previous === 0 };
+}
+
+// value: a number the metric can aggregate (we send seconds taken).
+export function track(event, { value, metadata } = {}) {
   if (!ready) return;
-  flagsmith.trackEvent(event, { metadata });
+  flagsmith.trackEvent(event, { value, metadata });
   // Flush right away. The game ends on a single event, and players often close the tab straight after.
   flagsmith.flushEvents().catch(() => {});
 }
