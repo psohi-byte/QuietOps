@@ -47,6 +47,21 @@ export default function ResultScreen({
 
   return (
     <section className="result-card" aria-labelledby="result-title">
+      {outcome === 'correct' && (
+        <div className="result-confetti" aria-hidden="true">
+          {Array.from({ length: 18 }, (_, index) => (
+            <span
+              key={index}
+              style={{
+                '--result-drift': `${(index - 8.5) * 5}%`,
+                '--result-rise': `${35 + (index % 5) * 14}px`,
+                '--result-delay': `${(index % 4) * 45}ms`,
+                '--result-spin': `${index % 2 === 0 ? 240 : -240}deg`,
+              }}
+            />
+          ))}
+        </div>
+      )}
       <h1 id="result-title" className={`result-title result-title-${outcome}`}>{headline}</h1>
       {!timedOut && <p className="result-time">in {seconds}s</p>}
       <p>The real root cause was <code>{rootCause}</code>.</p>
