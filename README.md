@@ -68,8 +68,8 @@ React, Vite, the Flagsmith JavaScript SDK, and Vercel.
 
 ## Team
 
-- **Project lead (@TODO)** built the game flow, dashboards, Flagsmith experiment integration, and live results page.
-- **Michael (@TODO)** worked on the result screen, project documentation, and player recruiting.
+- **Prabhjeev Sohi** built the game flow, dashboards, Flagsmith experiment integration, and live results page.
+- **Michael Sugg** worked on the result screen, project documentation, and player recruiting.
 
 ## Built for
 
