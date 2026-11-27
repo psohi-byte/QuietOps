@@ -295,7 +295,7 @@ kbd {
   .grouped > .panel:first-child { position: sticky; top: 96px; }
 }
 .depmap { display: block; width: 100%; height: auto; padding: 10px 8px 6px; }
-.depmap-edge { fill: none; stroke: #2b3344; stroke-width: 1.4; transition: stroke 150ms, opacity 150ms; }
+.depmap-edge { fill: none; stroke: #2b3344; stroke-width: 1.5; stroke-linejoin: round; transition: stroke 150ms, opacity 150ms; }
 .depmap-edge.hot { stroke: rgba(255, 176, 32, 0.75); stroke-width: 1.8; }
 .depmap-edge.focus { stroke: var(--accent); stroke-width: 2.2; }
 .depmap-edge.dim { opacity: 0.35; }
