@@ -1,0 +1,77 @@
+.result-card {
+  width: 100%;
+  max-width: 480px;
+  margin: clamp(1rem, 8vh, 5rem) auto;
+  padding: clamp(1rem, 5vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.result-card p { margin: 0.65rem 0; }
+
+.result-title {
+  margin: 0;
+  font-size: clamp(1.8rem, 6vw, 2.5rem);
+  line-height: 1.12;
+}
+
+.result-title-correct { color: var(--accent); }
+.result-title-wrong { color: var(--critical); }
+.result-title-timeout { color: var(--warning); }
+
+.result-time,
+.result-context,
+.result-challenge { color: var(--muted); }
+
+.result-invite {
+  margin: 1.5rem 0 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.result-challenge { font-size: 0.875rem; }
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.result-actions button { flex: 1 1 8rem; min-height: 44px; }
+
+.result-actions button:first-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.result-copy {
+  display: block;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.result-copy textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.result-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
