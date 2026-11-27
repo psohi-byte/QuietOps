@@ -98,48 +98,45 @@ function layout(services, W, BOX_W) {
   return { pos, height: lastRow + BOX_H / 2 + 16 };
 }
 
-// Spread n attachment points along a box edge, centred on x. Ordered by the other end's x
-// so neighbouring edges never cross right at the box.
-function spread(n, BOX_W) {
-  if (n <= 1) return [0];
-  const step = Math.min(26, (BOX_W - 30) / (n - 1));
-  return Array.from({ length: n }, (_, i) => (i - (n - 1) / 2) * step);
+// Orthogonal routing, like an architecture diagram: every edge leaves the bottom-centre of its
+// box, drops into the gap just below that row, runs sideways to the target's column, then drops
+// straight into the target's top-centre. Corners are rounded.
+// Consequences (deliberate): edges from one box share a trunk and fan out like a tree, and
+// edges into one box merge into a single arrow. LAYOUT keeps every target column free of boxes
+// in the rows a vertical segment passes through.
+const CORNER = 8;
+
+function route(a, b) {
+  const x1 = a.x;
+  const y1 = a.y + BOX_H / 2;
+  const x2 = b.x;
+  const y2 = b.y - BOX_H / 2 - 1;
+  const dx = x2 - x1;
+  if (Math.abs(dx) < 1) return `M${x1},${y1} V${y2}`;
+
+  const yc = y1 + (ROW_H - BOX_H) / 2; // middle of the gap below the source row
+  const r = Math.min(CORNER, Math.abs(dx) / 2, (yc - y1) / 2);
+  const dir = Math.sign(dx);
+  return [
+    `M${x1},${y1}`,
+    `V${yc - r}`,
+    `Q${x1},${yc} ${x1 + dir * r},${yc}`,
+    `H${x2 - dir * r}`,
+    `Q${x2},${yc} ${x2},${yc + r}`,
+    `V${y2}`,
+  ].join(' ');
 }
 
-function buildEdges(services, pos, BOX_W) {
-  const edges = services.flatMap((s) => s.dependsOn.map((dep) => ({ from: s.id, to: dep })));
-  const outOffset = {};
-  const inOffset = {};
-  const assign = (key, other, table) => {
-    const group = edges.filter((e) => e[key] === other).sort((a, b) => {
-      const ax = pos[key === 'from' ? a.to : a.from].x;
-      const bx = pos[key === 'from' ? b.to : b.from].x;
-      return ax - bx;
-    });
-    const offs = spread(group.length, BOX_W);
-    group.forEach((e, i) => (table[`${e.from}>${e.to}`] = offs[i]));
-  };
-  for (const s of services) {
-    assign('from', s.id, outOffset);
-    assign('to', s.id, inOffset);
-  }
-  return edges.map((e) => {
-    const a = pos[e.from];
-    const b = pos[e.to];
-    const k = `${e.from}>${e.to}`;
-    const x1 = a.x + outOffset[k];
-    const y1 = a.y + BOX_H / 2;
-    const x2 = b.x + inOffset[k];
-    const y2 = b.y - BOX_H / 2 - 2;
-    const bend = (y2 - y1) / 2;
-    return { ...e, key: k, d: `M${x1},${y1} C${x1},${y1 + bend} ${x2},${y2 - bend} ${x2},${y2}` };
-  });
+function buildEdges(services, pos) {
+  return services.flatMap((s) =>
+    s.dependsOn.map((dep) => ({ from: s.id, to: dep, key: `${s.id}>${dep}`, d: route(pos[s.id], pos[dep]) }))
+  );
 }
 
 export default function DependencyMap({ services, counts, worst, selected, onSelect }) {
   const { W, BOX_W, FONT } = SIZES[useCompact() ? 'compact' : 'wide'];
   const { pos, height } = layout(services, W, BOX_W);
-  const edges = buildEdges(services, pos, BOX_W);
+  const edges = buildEdges(services, pos);
   const involved = (id) => Boolean(counts[id]);
 
   function edgeClass(e) {
@@ -150,6 +147,9 @@ export default function DependencyMap({ services, counts, worst, selected, onSel
     return involved(e.from) && involved(e.to) ? 'hot' : '';
   }
   const marker = { focus: 'url(#arrow-focus)', hot: 'url(#arrow-hot)' };
+  // Shared trunks overlap, so paint quiet edges first and highlighted ones on top.
+  const layer = { dim: 0, '': 1, hot: 2, focus: 3 };
+  const drawn = edges.map((e) => ({ ...e, cls: edgeClass(e) })).sort((p, q) => layer[p.cls] - layer[q.cls]);
 
   function onKey(e, id) {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -166,28 +166,20 @@ export default function DependencyMap({ services, counts, worst, selected, onSel
       style={{ '--node-font': `${FONT}px` }}
     >
       <defs>
-        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" className="depmap-arrowhead" />
+        <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 L3,5 z" className="depmap-arrowhead" />
         </marker>
-        <marker id="arrow-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" className="depmap-arrowhead hot" />
+        <marker id="arrow-hot" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 L3,5 z" className="depmap-arrowhead hot" />
         </marker>
-        <marker id="arrow-focus" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" className="depmap-arrowhead focus" />
+        <marker id="arrow-focus" viewBox="0 0 10 10" refX="10" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 L3,5 z" className="depmap-arrowhead focus" />
         </marker>
       </defs>
 
-      {edges.map((e) => {
-        const cls = edgeClass(e);
-        return (
-          <path
-            key={e.key}
-            d={e.d}
-            className={`depmap-edge ${cls}`}
-            markerEnd={marker[cls] ?? 'url(#arrow)'}
-          />
-        );
-      })}
+      {drawn.map((e) => (
+        <path key={e.key} d={e.d} className={`depmap-edge ${e.cls}`} markerEnd={marker[e.cls] ?? 'url(#arrow)'} />
+      ))}
 
       <g style={{ '--step': staggerStep(services.length) }}>
         {services.map((s, i) => {
