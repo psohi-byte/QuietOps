@@ -49,16 +49,20 @@ export default function ResultScreen({
     <section className="result-card" aria-labelledby="result-title">
       {outcome === 'correct' && (
         <div className="result-confetti" aria-hidden="true">
-          {Array.from({ length: 18 }, (_, index) => (
-            <span
-              key={index}
-              style={{
-                '--result-drift': `${(index - 8.5) * 5}%`,
-                '--result-rise': `${35 + (index % 5) * 14}px`,
-                '--result-delay': `${(index % 4) * 45}ms`,
-                '--result-spin': `${index % 2 === 0 ? 240 : -240}deg`,
-              }}
-            />
+          {['left', 'right'].map((side) => (
+            <div key={side} className={`result-confetti-launch result-confetti-${side}`}>
+              {Array.from({ length: 24 }, (_, index) => (
+                <span
+                  key={index}
+                  style={{
+                    '--result-travel': `${25 + (index % 8) * 4}vw`,
+                    '--result-rise': `${14 + (index % 6) * 6}vh`,
+                    '--result-delay': `${(index % 7) * 35}ms`,
+                    '--result-spin': `${index % 2 === 0 ? 360 : -360}deg`,
+                  }}
+                />
+              ))}
+            </div>
           ))}
         </div>
       )}
