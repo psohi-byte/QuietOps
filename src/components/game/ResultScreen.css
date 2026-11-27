@@ -1,5 +1,5 @@
 .result-card {
-  width: 100%;
+  width: calc(100% - 32px); /* 16px gap on each side on phones */
   max-width: 480px;
   margin: clamp(1rem, 8vh, 5rem) auto;
   padding: clamp(1rem, 5vw, 2rem);
